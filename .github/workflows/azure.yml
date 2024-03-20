@@ -13,17 +13,17 @@ jobs:
     - name: Checkout del repositorio
       uses: actions/checkout@v2
 
-    - name: Login en Azure
-      run: |
-        $AzureUsername = $env:AZURE_USERNAME
-        $AzurePassword = ConvertTo-SecureString -String $env:AZURE_PASSWORD -AsPlainText -Force
-        $AzureCredential = New-Object System.Management.Automation.PSCredential($AzureUsername, $AzurePassword)
-        az login --service-principal -u $AzureUsername -p 'Your_Password_Containing_Special_Character' --tenant $env:AZURE_TENANT_ID
+    # - name: Login en Azure
+    #   run: az login --service-principal -u ${{ secrets.AZURE_USERNAME }} -p ${{ secrets.AZURE_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+
+    - name: Log in with Azure
+      uses: azure/login@v1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
 
     - name: Ejecutar script PowerShell
       shell: pwsh
       env:
         AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
         AZURE_VM_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
-      run: |
-        .\script.ps1
+      run: .\script.ps1
