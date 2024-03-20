@@ -1,4 +1,4 @@
-name: Ejecutar script PowerShell en Azure
+name: Ejecutar cmdlets de Azure en PowerShell
 
 on:
   push:
@@ -13,5 +13,9 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v2
 
-      - name: Ejecutar script PowerShell en Azure
+      - name: Install AzureRM module
+        run: |
+          Install-Module -Name Az.ResourceManager -AllowClobber
+
+      - name: Ejecutar script PowerShell
         run: .\script.ps1
