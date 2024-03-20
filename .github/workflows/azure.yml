@@ -1,0 +1,17 @@
+name: Ejecutar script PowerShell en Azure
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v2
+
+      - name: Ejecutar script PowerShell en Azure
+        run: .\script.ps1
