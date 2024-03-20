@@ -1,4 +1,4 @@
-name: Ejecutar cmdlets de Azure en PowerShell
+name: Crear VM en Azure y hacer commit
 
 on:
   push:
@@ -8,14 +8,18 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
+    
     steps:
-      - name: Checkout del repositorio
-        uses: actions/checkout@v2
+    - name: Checkout del repositorio
+      uses: actions/checkout@v2
 
-      - name: Install AzureRM module
-        run: |
-          Install-Module -Name Az.ResourceManager -AllowClobber
+    - name: Login en Azure
+      run: az login --service-principal -u ${{ secrets.AZURE_USERNAME }} -p ${{ secrets.AZURE_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
 
-      - name: Ejecutar script PowerShell
-        run: .\script.ps1
+    - name: Ejecutar script PowerShell
+      shell: pwsh
+      env:
+        AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
+        AZURE_VM_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
+      run: |
+        .\script.ps1
