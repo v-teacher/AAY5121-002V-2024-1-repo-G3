@@ -1,5 +1,5 @@
-<h1 style="text-align: center;">Administracion de aplicaciones corporativas ☁️</h1> 
-<h2 style="text-align: center;">AAY5121-002V-2024-1-repo-G3</h2>
+<h1 align="center"">Administracion de aplicaciones corporativas ☁️</h1> 
+<h2 align="center"">AAY5121-002V-2024-1-repo-G3</h2>
 
 ## Scripts hechos:
 - Powershell ✅
