@@ -9,7 +9,7 @@ location="eastus"
 # Vars for Create VM
 vm_name="vm-actividad-2"
 username="$AZURE_VM_USERNAME"
-password="AZURE_VM_PASSWORD"
+password="$AZURE_VM_PASSWORD"
 
 # Resource Group
 az group create --name $resource_group --location $location
