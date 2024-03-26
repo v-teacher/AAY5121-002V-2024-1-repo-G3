@@ -1,6 +1,5 @@
 # AzureCLI Pws
 # URL Material https://learn.microsoft.com/en-us/azure/virtual-machines/windows/quick-create-powershell
-Import-Module Az
 # Resource Group
 New-AzResourceGroup -Name 'actividad-2' -Location 'EastUS'
 $Username = $env:AZURE_VM_USERNAME
