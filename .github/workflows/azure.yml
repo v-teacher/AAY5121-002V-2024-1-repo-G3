@@ -8,19 +8,21 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
     steps:
-    - name: Checkout del repositorio
-      uses: actions/checkout@v2
+      - name: Checkout del repositorio
+        uses: actions/checkout@v2
 
-    - name: Log in with Azure
-      uses: azure/login@v1
-      with:
-        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+      - name: Install Azure PowerShell Module
+        run: Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force
 
-    - name: Ejecutar script PowerShell
-      shell: pwsh
-      env:
-        AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
-        AZURE_VM_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
-      run: .\script.ps1
+      - name: Log in with Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ejecutar script PowerShell
+        shell: pwsh
+        env:
+          AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
+          AZURE_VM_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
+        run: .\script.ps1
