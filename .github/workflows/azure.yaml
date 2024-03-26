@@ -21,9 +21,11 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           enable-AzPSSession: true
 
-      - name: Ejecutar script PowerShell
-        shell: pwsh
+      - name: Run Azure PowerShell Script File
+        uses: azure/powershell@v1
         env:
-          AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
-          AZURE_VM_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
-        run: .\script.ps1
+            AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
+            AZURE_VM_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
+        with:
+          inlineScript: .\script.ps1
+          azPSVersion: "latest"
