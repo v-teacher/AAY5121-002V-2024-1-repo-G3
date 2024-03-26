@@ -12,8 +12,8 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v2
 
-      - name: Install Azure PowerShell Module
-        run: Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force -AllowClobber
+      # - name: Install Azure PowerShell Module
+      #   run: Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force -AllowClobber
         
       - name: Log in with Azure
         uses: azure/login@v1
