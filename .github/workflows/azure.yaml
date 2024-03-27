@@ -11,9 +11,6 @@ jobs:
     steps:
       - name: Checkout del repositorio
         uses: actions/checkout@v2
-
-      # - name: Install Azure PowerShell Module
-      #   run: Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force -AllowClobber
         
       - name: Log in with Azure
         uses: azure/login@v1
@@ -27,5 +24,5 @@ jobs:
             AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
             AZURE_VM_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
         with:
-          inlineScript: ./script.ps1
           azPSVersion: "latest"
+          inlineScript: ./script.ps1
