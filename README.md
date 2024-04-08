@@ -6,6 +6,8 @@
 - Bash ✅
 
 ## Pendiente:
+- Check VM status
+
 - Create DB & Test it
 - Gh Actions
 

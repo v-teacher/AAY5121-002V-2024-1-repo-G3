@@ -13,6 +13,15 @@ port_opened=false
 db_server=false
 sql_status=false
 firewall_conf=false
+ip_name="public"
+virtualnet_status=false
+public_ip_status=false
+nsg_rules_status=false
+ip_status=false
+nic_name="nic_grupo3"
+subnet_name="grupo3"
+vnet_name="vnet_grupo3"
+
 db_name="keaguirre"
 
 # Función para manejar errores
@@ -24,17 +33,83 @@ handle_error() {
 # Función para crear el grupo de recursos
 create_resource_group() {
     echo "Creando grupo de recursos..."
-    if az group create --name $resource_group --location $location; then
+    if az group create --name $resource_group --location $location --tags aay5121=grupo3; then
         resource_group_status=true
     else
         handle_error "No se pudo crear el grupo de recursos."
     fi
 }
 
+create_virtualnet_subnet(){
+    echo "Creando Redvirtual y Subnet..."
+    if az network vnet create --resource-group $resource_group --name $vnet_name --address-prefix "192.168.0.0/16" --subnet-name $subnet_name --subnet-prefix "192.168.10.0/24"; then
+        virtualnet_status=true
+    else
+        handle_error "No se pudo crear la red virtual o la subred"
+    fi
+}
+
+# IP Publica
+ip_create(){
+    echo "Creando IP Publica..."
+    if az network public-ip create --resource-group $resource_group --name $ip_name --sku Standard --allocation-method Static; then
+        public_ip_status=true
+    else
+        handle_error "No se pudo crear la IP Publica"
+    fi
+}
+
+create_nsg(){
+    echo "Creando Network Security Group..."
+    if az network nsg create --resource-group $resource_group --name $nsg_name; then
+        nsg_status=true
+    else
+        handle_error "No se pudo crear el Network Security Group"
+}
+
+nsg_rules(){
+    echo "Creando reglas RDP y HTTP con origen abierto...699"
+    if az network nsg rule create --resource-group $resource_group --nsg-name $nsg_name --name RDPAccess --priority 1000 --protocol Tcp --destination-port-range 3389 --access Allow --direction Inbound --source-address-prefix "0.0.0.0/0"; then
+        echo "NSG RDP Rule created"
+        if az network nsg rule create --resource-group $resource_group --nsg-name $nsg_name --name HTTPAccess --priority 1010 --protocol Tcp --destination-port-range 80 --access Allow --direction Inbound --source-address-prefix "0.0.0.0/0"; then
+            echo "NSG HHTP Rule created"
+            nsg_rules_status=true
+        else
+            handle_error "No se pudo crear la regla HHTP para el NSG"
+        fi
+    else
+        handle_error "No se pudo crear la reglas RDP para el NSG"
+    fi
+
+}
+
+check_ip(){
+    while :; do
+        ip_address=$(az network public-ip show --name $ip_name --resource-group $resource_group --query ipAddress --output tsv 2>/dev/null)
+        if [[ -n "$ip_address" && "$ip_address" != "null" ]]; then
+            sleep 2
+            echo "La IP pública encontrada es: $ip_address"
+            ip_status=true
+            break # Salir del bucle cuando la IP pública esté disponible
+        else
+            echo "Aún no... comprobando nuevamente"
+            sleep 10 # Esperar 10 segundos antes de intentarlo de nuevo
+        fi
+    done
+}
+
+create_nic(){
+    if az network nic create --resource-group $resource_group --name $nic_name --vnet-name $vnet_name --subnet $subnet_name --network-security-group $nsg_name --public-ip-address $ip_name; then
+        nic_status=true
+    else
+        handle_error "Error al crear NIC (Network Interface Card)..."
+    fi
+}
+
 # Función para crear la máquina virtual
 create_vm() {
     echo "Creando máquina virtual..."
-    if az vm create --resource-group $resource_group --name $vm_name --image MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest --public-ip-sku Standard --admin-username $username --admin-password $password; then
+    if az vm create --resource-group $resource_group --name $vm_name --image MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest --public-ip-sku Standard --admin-username $username --admin-password $password --tags aay5121=grupo3; then
         vm_status=true
     else
         handle_error "No se pudo crear la máquina virtual."
@@ -104,6 +179,24 @@ cleanup_resources() {
 # Manejar errores y ejecutar funciones en orden
 create_resource_group
 if $resource_group_status; then
+    create_virtualnet_subnet
+fi    
+if $virtualnet_status; then
+    ip_create
+fi    
+if $public_ip_status; then
+    create_nsg
+fi    
+if $nsg_status; then
+    nsg_rules
+fi
+if $nsg_rules_status; then
+    check_ip
+fi
+if $ip_status; then
+    create_nic
+fi
+if $nic_status; then
     create_vm
 fi
 if $vm_status; then
