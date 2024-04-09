@@ -18,6 +18,7 @@ virtualnet_status=false
 public_ip_status=false
 nsg_rules_status=false
 ip_status=false
+nsg_name="nsg_grupo3"
 nic_name="nic_grupo3"
 subnet_name="grupo3"
 vnet_name="vnet_grupo3"
@@ -33,7 +34,7 @@ handle_error() {
 # Función para crear el grupo de recursos
 create_resource_group() {
     echo "Creando grupo de recursos..."
-    if az group create --name $resource_group --location $location --tags aay5121=grupo3; then
+    if az group create --name "$resource_group" --location "$location" --tags aay5121=grupo3; then
         resource_group_status=true
     else
         handle_error "No se pudo crear el grupo de recursos."
@@ -42,7 +43,7 @@ create_resource_group() {
 
 create_virtualnet_subnet(){
     echo "Creando Redvirtual y Subnet..."
-    if az network vnet create --resource-group $resource_group --name $vnet_name --address-prefix "192.168.0.0/16" --subnet-name $subnet_name --subnet-prefix "192.168.10.0/24"; then
+    if az network vnet create --resource-group "$resource_group" --name "$vnet_name" --address-prefix "192.168.0.0/16" --subnet-name "$subnet_name" --subnet-prefix "192.168.10.0/24"; then
         virtualnet_status=true
     else
         handle_error "No se pudo crear la red virtual o la subred"
@@ -52,7 +53,7 @@ create_virtualnet_subnet(){
 # IP Publica
 ip_create(){
     echo "Creando IP Publica..."
-    if az network public-ip create --resource-group $resource_group --name $ip_name --sku Standard --allocation-method Static; then
+    if az network public-ip create --resource-group "$resource_group" --name "$ip_name" --sku Standard --allocation-method Static; then
         public_ip_status=true
     else
         handle_error "No se pudo crear la IP Publica"
@@ -61,17 +62,18 @@ ip_create(){
 
 create_nsg(){
     echo "Creando Network Security Group..."
-    if az network nsg create --resource-group $resource_group --name $nsg_name; then
+    if az network nsg create --resource-group "$resource_group" --name "$nsg_name"; then
         nsg_status=true
     else
         handle_error "No se pudo crear el Network Security Group"
+    fi
 }
 
 nsg_rules(){
     echo "Creando reglas RDP y HTTP con origen abierto...699"
-    if az network nsg rule create --resource-group $resource_group --nsg-name $nsg_name --name RDPAccess --priority 1000 --protocol Tcp --destination-port-range 3389 --access Allow --direction Inbound --source-address-prefix "0.0.0.0/0"; then
+    if az network nsg rule create --resource-group "$resource_group" --nsg-name "$nsg_name" --name RDPAccess --priority 1000 --protocol Tcp --destination-port-range 3389 --access Allow --direction Inbound --source-address-prefix "0.0.0.0/0"; then
         echo "NSG RDP Rule created"
-        if az network nsg rule create --resource-group $resource_group --nsg-name $nsg_name --name HTTPAccess --priority 1010 --protocol Tcp --destination-port-range 80 --access Allow --direction Inbound --source-address-prefix "0.0.0.0/0"; then
+        if az network nsg rule create --resource-group "$resource_group" --nsg-name "$nsg_name" --name HTTPAccess --priority 1010 --protocol Tcp --destination-port-range 80 --access Allow --direction Inbound --source-address-prefix "0.0.0.0/0"; then
             echo "NSG HHTP Rule created"
             nsg_rules_status=true
         else
@@ -85,7 +87,7 @@ nsg_rules(){
 
 check_ip(){
     while :; do
-        ip_address=$(az network public-ip show --name $ip_name --resource-group $resource_group --query ipAddress --output tsv 2>/dev/null)
+        ip_address=$(az network public-ip show --name "$ip_name" --resource-group "$resource_group" --query ipAddress --output tsv 2>/dev/null)
         if [[ -n "$ip_address" && "$ip_address" != "null" ]]; then
             sleep 2
             echo "La IP pública encontrada es: $ip_address"
@@ -99,7 +101,7 @@ check_ip(){
 }
 
 create_nic(){
-    if az network nic create --resource-group $resource_group --name $nic_name --vnet-name $vnet_name --subnet $subnet_name --network-security-group $nsg_name --public-ip-address $ip_name; then
+    if az network nic create --resource-group "$resource_group" --name "$nic_name" --vnet-name "$vnet_name" --subnet "$subnet_name" --network-security-group "$nsg_name" --public-ip-address "$ip_name"; then
         nic_status=true
     else
         handle_error "Error al crear NIC (Network Interface Card)..."
@@ -109,7 +111,7 @@ create_nic(){
 # Función para crear la máquina virtual
 create_vm() {
     echo "Creando máquina virtual..."
-    if az vm create --resource-group $resource_group --name $vm_name --image MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest --public-ip-sku Standard --admin-username $username --admin-password $password --tags aay5121=grupo3; then
+    if az vm create --resource-group "$resource_group" --name "$vm_name" --image MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest --public-ip-sku Standard --admin-username "$username" --admin-password "$password" --tags aay5121=grupo3; then
         vm_status=true
     else
         handle_error "No se pudo crear la máquina virtual."
@@ -119,7 +121,7 @@ create_vm() {
 # Función para instalar el servidor web en la máquina virtual
 install_web_server() {
     echo "Instalando servidor web en la máquina virtual..."
-    if az vm run-command invoke -g $resource_group -n $vm_name --command-id RunPowerShellScript --scripts "Install-WindowsFeature -name Web-Server -IncludeManagementTools"; then
+    if az vm run-command invoke -g "$resource_group" -n "$vm_name" --command-id RunPowerShellScript --scripts "Install-WindowsFeature -name Web-Server -IncludeManagementTools"; then
         webserver_status=true
     else
         handle_error "No se pudo instalar el servidor web."
@@ -129,7 +131,7 @@ install_web_server() {
 # Función para abrir el puerto 80 en la máquina virtual
 open_port_80() {
     echo "Abriendo puerto 80 en la máquina virtual..."
-    if az vm open-port --port 80 --resource-group $resource_group --name $vm_name; then
+    if az vm open-port --port 80 --resource-group "$resource_group" --name "$vm_name"; then
         port_opened=true
     else
         handle_error "No se pudo abrir el puerto 80."
@@ -140,7 +142,7 @@ open_port_80() {
 
 create_sql_server() {
     echo "Creando servidor SQL..."
-    if az sql server create --name $vm_name --resource-group $resource_group --location $location --admin-user $username --admin-password $password; then
+    if az sql server create --name "$vm_name" --resource-group "$resource_group" --location "$location" --admin-user "$username" --admin-password "$password"; then
         db_server=true
     else
         handle_error "No se pudo crear el servidor SQL."
@@ -150,7 +152,7 @@ create_sql_server() {
 # Función para realizar la limpieza de recursos
 create_firewall_rules() {
     echo "Configurando firewall..."
-    if az sql server firewall-rule create --resource-group $resourceGroup --server $server --name AllowYourIp --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0; then
+    if az sql server firewall-rule create --resource-group "$resource_group" --server "$vm_name" --name AllowYourIp --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0; then
         firewall_conf=true
     else
         handle_error "No se pudo eliminar el grupo de recursos."
@@ -159,7 +161,7 @@ create_firewall_rules() {
 
 create_db() {
     echo "Creando $vm_name SQL"
-    if az sql db create --resource-group $resourceGroup --server $server --name $db_name --sample-name AdventureWorksLT --edition GeneralPurpose --compute-model Serverless --family Gen5 --capacity 2; then
+    if az sql db create --resource-group "$resource_group" --server "$vm_name" --name "$db_name" --sample-name AdventureWorksLT --edition GeneralPurpose --compute-model Serverless --family Gen5 --capacity 2; then
         sql_status=true
     else
         handle_error "No se pudo crear el servidor SQL."
@@ -169,7 +171,7 @@ create_db() {
 # Función para realizar la limpieza de recursos
 cleanup_resources() {
     echo "Limpiando recursos..."
-    if az group delete --name $resource_group --yes; then
+    if az group delete --name "$resource_group" --yes; then
         cleanup_done=true
     else
         handle_error "No se pudo eliminar el grupo de recursos."
