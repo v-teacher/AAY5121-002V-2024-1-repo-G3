@@ -163,10 +163,20 @@ create_db() {
     echo "Creando $vm_name SQL"
     if az sql db create --resource-group "$resource_group" --server "$vm_name" --name "$db_name" --sample-name AdventureWorksLT --edition GeneralPurpose --compute-model Serverless --family Gen5 --capacity 2; then
         sql_status=true
+
+        # Comando sqlcmd para ejecutar una consulta de prueba
+        echo "Ejecutando consulta de prueba en la base de datos..."
+        if sqlcmd -S "$vm_name.database.windows.net" -d "$db_name" -U "$username" -P "$password" -Q "SELECT 1 AS Valor;"; then
+            echo "Consulta ejecutada exitosamente."
+        else
+            handle_error "No se pudo ejecutar la consulta de prueba."
+        fi
+
     else
         handle_error "No se pudo crear el servidor SQL."
     fi
 }
+
 
 # Función para realizar la limpieza de recursos
 cleanup_resources() {
