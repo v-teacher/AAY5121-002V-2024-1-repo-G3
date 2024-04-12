@@ -4,7 +4,6 @@
 resource_group_status=false
 vm_status=false
 webserver_status=false
-sii_install_status=false
 port_opened=false
 db_server=false
 sql_status=false
@@ -14,9 +13,9 @@ virtualnet_status=false
 public_ip_status=false
 nsg_rules_status=false
 ip_status=false
-resource_group="actividad-2"
+resource_group="evaluacion-1"
 location="eastus"
-vm_name="vm-actividad-2"
+vm_name="vm-evaluacion-1"
 username="keaguirre"
 password="Avaras.duoc2024"
 nsg_name="nsg_grupo3"
@@ -74,7 +73,7 @@ nsg_rules(){
     if az network nsg rule create --resource-group "$resource_group" --nsg-name "$nsg_name" --name RDPAccess --priority 1000 --protocol Tcp --destination-port-range 3389 --access Allow --direction Inbound --source-address-prefix "0.0.0.0/0"; then
         echo "NSG RDP Rule created"
         if az network nsg rule create --resource-group "$resource_group" --nsg-name "$nsg_name" --name HTTPAccess --priority 1010 --protocol Tcp --destination-port-range 80 --access Allow --direction Inbound --source-address-prefix "0.0.0.0/0"; then
-            echo "NSG HHTP Rule created"
+            echo "NSG HTTP Rule created"
             nsg_rules_status=true
         else
             handle_error "No se pudo crear la regla HHTP para el NSG"
@@ -111,7 +110,7 @@ create_nic(){
 # Función para crear la máquina virtual
 create_vm() {
     echo "Creando máquina virtual..."
-    if az vm create --resource-group "$resource_group" --name "$vm_name" --image MicrosoftWindowsServer:WindowsServer:2019-datacenter:latest --public-ip-sku Standard --admin-username "$username" --admin-password "$password" --tags aay5121=grupo3; then
+    if az vm create --resource-group "$resource_group" --name "$vm_name" --image MicrosoftWindowsServer:WindowsServer:2019-datacenter:latest --public-ip-sku Standard --admin-username "$username" --admin-password "$password" --tags aay5121=grupo3 --nics "$nic_name"; then
         vm_status=true
     else
         handle_error "No se pudo crear la máquina virtual."
@@ -122,34 +121,9 @@ create_vm() {
 install_web_server() {
     echo "Instalando servidor web en la máquina virtual..."
     if az vm run-command invoke -g "$resource_group" -n "$vm_name" --command-id RunPowerShellScript --scripts "Install-WindowsFeature -name Web-Server -IncludeManagementTools"; then
-        sii_install_status=true
+        webserver_install_status=true
     else
         handle_error "No se pudo instalar el servidor web."
-    fi
-}
-
-# Function to check web server status
-check_web_server_status() {
-    # Show public ip
-    ip_publica=$(az vm show --resource-group $resource_group --name $vm_name --show-details | jq -r '.publicIps')
-
-    # Check with curl public ip, if retrieves an html response then everything is ok
-    response=$(curl -sSL "http://$ip_publica")
-    echo response: "$response"
-
-    if [ -n "$response" ]; then
-        if [[ $(awk '/<!DOCTYPE html|<!doctype html/ {print}' <<< "$response") ]]; then
-            echo "Web server is running."
-            webserver_status=true
-            # Delete created resource group
-            az group delete --name $resource_group
-        else
-            echo "The response is not an HTML page or there is an error in the response."
-            az group delete --name $resource_group
-        fi
-    else
-        echo "The response is null."
-        az group delete --name $resource_group
     fi
 }
 
@@ -163,8 +137,31 @@ open_port_80() {
     fi
 }
 
-# Create DB
+# Function to check web server status
+check_web_server_status() {
+    # Show public ip
+    ip_publica=$(az network public-ip show --resource-group "$resource_group" --name "$ip_name" | jq -r '.ipAddress')
+    echo "Public IP check_web_server_status: $ip_publica"
+    echo "Public IP created before: $ip_address"
+    # Check with curl public ip, if retrieves an html response then everything is ok
+    response=$(curl -sSL "http://$ip_publica")
+    echo response: "$response"
 
+    if [ -n "$response" ]; then
+        if [[ $(awk '/<!DOCTYPE html|<!doctype html/ {print}' <<< "$response") ]]; then
+            echo "Web server is running."
+            webserver_status=true
+        else
+            echo "The response is not an HTML page or there is an error in the response."
+            # az group delete --name $resource_group
+        fi
+    else
+        echo "The response is null."
+        # az group delete --name $resource_group
+    fi
+}
+
+# Create DB
 create_sql_server() {
     echo "Creando servidor SQL..."
     if az sql server create --name "$vm_name" --resource-group "$resource_group" --location "$location" --admin-user "$username" --admin-password "$password"; then
@@ -239,13 +236,13 @@ fi
 if $vm_status; then
     install_web_server
 fi
-if $sii_install_status; then
-    check_web_server_status
-fi
-if $webserver_status; then
+if $webserver_install_status; then
     open_port_80
 fi
 if $port_opened; then
+    check_web_server_status
+fi
+if $webserver_status; then
     create_sql_server
 fi
 if $db_server; then
@@ -256,6 +253,7 @@ if $firewall_conf; then
 fi
 if $sql_status; then
     cleanup_resources
+    # echo "Cleanup resources"
 fi
 if $cleanup_done; then
     echo "Script terminado"
