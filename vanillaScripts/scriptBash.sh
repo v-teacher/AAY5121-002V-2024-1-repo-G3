@@ -1,14 +1,10 @@
 #!/bin/bash
 
 # Declaración de variables
-resource_group="actividad-2"
-location="eastus"
-vm_name="vm-actividad-2"
-username="keaguirre"
-password="Avaras.duoc2024"
 resource_group_status=false
 vm_status=false
 webserver_status=false
+sii_install_status=false
 port_opened=false
 db_server=false
 sql_status=false
@@ -18,11 +14,15 @@ virtualnet_status=false
 public_ip_status=false
 nsg_rules_status=false
 ip_status=false
+resource_group="actividad-2"
+location="eastus"
+vm_name="vm-actividad-2"
+username="keaguirre"
+password="Avaras.duoc2024"
 nsg_name="nsg_grupo3"
 nic_name="nic_grupo3"
 subnet_name="grupo3"
 vnet_name="vnet_grupo3"
-
 db_name="keaguirre"
 
 # Función para manejar errores
@@ -111,7 +111,7 @@ create_nic(){
 # Función para crear la máquina virtual
 create_vm() {
     echo "Creando máquina virtual..."
-    if az vm create --resource-group "$resource_group" --name "$vm_name" --image MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest --public-ip-sku Standard --admin-username "$username" --admin-password "$password" --tags aay5121=grupo3; then
+    if az vm create --resource-group "$resource_group" --name "$vm_name" --image MicrosoftWindowsServer:WindowsServer:2019-datacenter:latest --public-ip-sku Standard --admin-username "$username" --admin-password "$password" --tags aay5121=grupo3; then
         vm_status=true
     else
         handle_error "No se pudo crear la máquina virtual."
@@ -122,9 +122,34 @@ create_vm() {
 install_web_server() {
     echo "Instalando servidor web en la máquina virtual..."
     if az vm run-command invoke -g "$resource_group" -n "$vm_name" --command-id RunPowerShellScript --scripts "Install-WindowsFeature -name Web-Server -IncludeManagementTools"; then
-        webserver_status=true
+        sii_install_status=true
     else
         handle_error "No se pudo instalar el servidor web."
+    fi
+}
+
+# Function to check web server status
+check_web_server_status() {
+    # Show public ip
+    ip_publica=$(az vm show --resource-group $resource_group --name $vm_name --show-details | jq -r '.publicIps')
+
+    # Check with curl public ip, if retrieves an html response then everything is ok
+    response=$(curl -sSL "http://$ip_publica")
+    echo response: "$response"
+
+    if [ -n "$response" ]; then
+        if [[ $(awk '/<!DOCTYPE html|<!doctype html/ {print}' <<< "$response") ]]; then
+            echo "Web server is running."
+            webserver_status=true
+            # Delete created resource group
+            az group delete --name $resource_group
+        else
+            echo "The response is not an HTML page or there is an error in the response."
+            az group delete --name $resource_group
+        fi
+    else
+        echo "The response is null."
+        az group delete --name $resource_group
     fi
 }
 
@@ -166,7 +191,7 @@ create_db() {
 
         # Comando sqlcmd para ejecutar una consulta de prueba
         echo "Ejecutando consulta de prueba en la base de datos..."
-        if sqlcmd -S "$vm_name.database.windows.net" -d "$db_name" -U "$username" -P "$password" -Q "SELECT 1 AS Valor;"; then
+        if sqlcmd -S "$vm_name.database.windows.net" -d "$db_name" -U "$username" -P "$password" -Q "SELECT TOP 20 pc.Name as CategoryName, p.name as ProductName FROM SalesLT.ProductCategory pc JOIN SalesLT.Product p ON pc.productcategoryid = p.productcategoryid;"; then
             echo "Consulta ejecutada exitosamente."
         else
             handle_error "No se pudo ejecutar la consulta de prueba."
@@ -213,6 +238,9 @@ if $nic_status; then
 fi
 if $vm_status; then
     install_web_server
+fi
+if $sii_install_status; then
+    check_web_server_status
 fi
 if $webserver_status; then
     open_port_80
