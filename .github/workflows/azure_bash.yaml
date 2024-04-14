@@ -18,4 +18,4 @@ jobs:
         env:
           INPUT_PASSWORD: ${{ secrets.INPUT_PASSWORD }}
           INPUT_SUB_ID: ${{ secrets.INPUT_SUB_ID }}
-        run: bash scriptBashAction.sh
+        run: bash scriptBash.sh
