@@ -16,6 +16,6 @@ jobs:
 
       - name: Run Azure sh script
         env:
-            AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
-            AZURE_VM_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
-        run: sh scriptBash.sh
+          INPUT_PASSWORD: ${{ secrets.INPUT_PASSWORD }}
+          INPUT_SUB_ID: ${{ secrets.INPUT_SUB_ID }}
+        run: bash scriptBashAction.sh
