@@ -12,33 +12,33 @@ jobs:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
         
       - name: Crear grupo de recursos
-        run: az group create --name Myrg01 --location EastUS
+        run: az group create --name Evaluacion-1-Cabrera --location EastUS
           
       - name: Crear dirección IP pública para la máquina con Windows
-        run: az network public-ip create --resource-group Myrg01 --name Publicwindows01 --allocation-method Static
+        run: az network public-ip create --resource-group Evaluacion-1-Cabrera --name Publicwindows01 --allocation-method Static
           
       - name: Crear el NSG
-        run: az network nsg create --resource-group Myrg01 --name NSG01
+        run: az network nsg create --resource-group Evaluacion-1-Cabrera --name NSG01
           
       - name: Crear red virtual
-        run: az network vnet create --resource-group Myrg01 --name Vnet01 --address-prefix 192.168.0.0/16 --subnet-name Subnet01 --subnet-prefix 192.168.10.0/24
+        run: az network vnet create --resource-group Evaluacion-1-Cabrera --name Vnet01 --address-prefix 192.168.0.0/16 --subnet-name Subnet01 --subnet-prefix 192.168.10.0/24
           
       - name: Crear NIC para la máquina con Windows
-        run: az network nic create --resource-group Myrg01 --name Nicwindows01 --vnet-name Vnet01 --subnet Subnet01 --public-ip-address Publicwindows01 --network-security-group NSG01
+        run: az network nic create --resource-group Evaluacion-1-Cabrera --name Nicwindows01 --vnet-name Vnet01 --subnet Subnet01 --public-ip-address Publicwindows01 --network-security-group NSG01
           
       - name: Creando Reglas Inbound 1
-        run: az network nsg rule create --resource-group Myrg01 --nsg-name NSG01 --name AllowRDP --protocol Tcp --direction Inbound --priority 1000 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389 --access Allow
+        run: az network nsg rule create --resource-group Evaluacion-1-Cabrera --nsg-name NSG01 --name AllowRDP --protocol Tcp --direction Inbound --priority 1000 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389 --access Allow
           
       - name: Creando Reglas Inbound 2
-        run: az network nsg rule create --resource-group Myrg01 --nsg-name NSG01 --name AllowHTTP --protocol Tcp --direction Inbound --priority 1001 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 80 --access Allow
+        run: az network nsg rule create --resource-group Evaluacion-1-Cabrera --nsg-name NSG01 --name AllowHTTP --protocol Tcp --direction Inbound --priority 1001 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 80 --access Allow
           
       - name: Creando Reglas Inbound 3
-        run: az network nsg rule create --resource-group Myrg01 --nsg-name NSG01 --name AllowHTTPS --protocol Tcp --direction Inbound --priority 1002 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow 
+        run: az network nsg rule create --resource-group Evaluacion-1-Cabrera --nsg-name NSG01 --name AllowHTTPS --protocol Tcp --direction Inbound --priority 1002 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow 
           
       - name: Crear VM con Windows
         run: |
           az vm create \
-            --resource-group Myrg01 \
+            --resource-group Evaluacion-1-Cabrera \
             --name Mywindows01 \
             --image Win2022Datacenter \
             --admin-username darkzeth \
@@ -48,15 +48,15 @@ jobs:
             --tags Github-Action
             
       - name: Comprobar VM Windows Server  
-        run: az vm show --name Mywindows01 --resource-group Myrg01 --show-details --query provisioningState --output table
+        run: az vm show --name Mywindows01 --resource-group Evaluacion-1-Cabrera --show-details --query provisioningState --output table
         
       - name: Instalar IIS en la máquina virtual Windows Server
-        run: az vm run-command invoke --resource-group Myrg01 --name Mywindows01 --command-id RunPowerShellScript --scripts 'Install-WindowsFeature -Name Web-Server -IncludeManagementTools'
+        run: az vm run-command invoke --resource-group Evaluacion-1-Cabrera --name Mywindows01 --command-id RunPowerShellScript --scripts 'Install-WindowsFeature -Name Web-Server -IncludeManagementTools'
         
       - name: Crear el servidor SQL   
         run: |
           az sql server create \
-            --resource-group Myrg01 \
+            --resource-group Evaluacion-1-Cabrera \
             --name dzserver01 \
             --location EastUS \
             --admin-user darkzeth \
@@ -65,7 +65,7 @@ jobs:
       - name: Configurar regla de firewall para permitir acceso 
         run: |
           az sql server firewall-rule create \
-            --resource-group Myrg01 \
+            --resource-group Evaluacion-1-Cabrera \
             --server dzserver01 \
             --name AllowAllAzureServices \
             --start-ip-address 0.0.0.0 \
@@ -74,7 +74,7 @@ jobs:
       - name: Crear la base de datos en Azure SQL Database 
         run: |
           az sql db create \
-            --resource-group Myrg01 \
+            --resource-group Evaluacion-1-Cabrera \
             --server dzserver01 \
             --name DZBD01 \
             --edition GeneralPurpose \
@@ -85,7 +85,7 @@ jobs:
       - name: Comprobar base de datos SQL  
         run: |
           az sql db show \
-            --resource-group Myrg01 \
+            --resource-group Evaluacion-1-Cabrera \
             --server dzserver01 \
             --name DZBD01
         
