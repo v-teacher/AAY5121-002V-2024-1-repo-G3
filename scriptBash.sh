@@ -36,7 +36,7 @@ handle_error() {
 # Función para crear el grupo de recursos
 create_resource_group() {
     echo "Creando grupo de recursos..."
-    if az group create --name "$resource_group" --location "$location" --tags aay5121=grupo3; then
+    if az group create --name create_grupo_prueba1 --location "$location" --tags aay5121=grupo3; then
         resource_group_status=true
     else
         handle_error "No se pudo crear el grupo de recursos."
