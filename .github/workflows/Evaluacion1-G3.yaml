@@ -84,7 +84,12 @@ jobs:
             --family Gen5 \
             --sample-name AdventureWorksLT \
             --capacity 2
-        
+            
+      - name: Execute SQL query
+        env: 
+          INPUT_PASSWORD: ${{ secrets.INPUT_PASSWORD }}
+        run: |
+          sqlcmd -S "$vm_name.database.windows.net" -d "$INPUT_DB_NAME" -U "$INPUT_USERNAME" -P "$INPUT_PASSWORD" -Q "SELECT TOP 20 pc.Name as CategoryName, p.name as ProductName FROM SalesLT.ProductCategory pc JOIN SalesLT.Product p ON pc.productcategoryid = p.productcategoryid;"
       - name: Comprobar base de datos SQL  
         run: |
           az sql db show \
