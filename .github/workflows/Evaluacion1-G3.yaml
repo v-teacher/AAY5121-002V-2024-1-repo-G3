@@ -13,7 +13,7 @@ jobs:
           creds: "${{ secrets.AZURE_CREDENTIALS }}"
         
       - name: Crear grupo de recursos
-        run: az group create --name Evaluacion-1-Cabrera --location "$INPUT_LOCATION"
+        run: az group create --name "$INPUT_RESOURCE_GROUP" --location "$INPUT_LOCATION"
           
       - name: Crear dirección IP pública para la máquina con Windows
         run: az network public-ip create --resource-group "$INPUT_RESOURCE_GROUP" --name "$INPUT_RESOURCE_GROUP" --allocation-method Static
