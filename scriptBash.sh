@@ -8,24 +8,22 @@ port_opened=false
 db_server=false
 sql_status=false
 firewall_conf=false
+ip_name="public"
 virtualnet_status=false
 public_ip_status=false
 nsg_rules_status=false
 ip_status=false
 role_assigned=false
-ip_name="$INPUT_IP_NAME"
-resource_group="$INPUT_RESOURCE_GROUP"
-location="$INPUT_LOCATION"
-vm_name="$INPUT_VM_NAME"
-username="$INPUT_USERNAME"
-password="$INPUT_PASSWORD"
-nsg_name="$INPUT_NSG_NAME"
-nic_name="$INPUT_NIC_NAME"
-subnet_name="$INPUT_SUBNET_NAME"
-vnet_name="$INPUT_VNET_NAME"
-db_name="$INPUT_DB_NAME"
-role="$INPUT_ROLE"
-sub_id="$INPUT_SUB_ID"
+resource_group="evaluacion-1"
+location="eastus"
+vm_name="vm-evaluacion-1"
+username="keaguirre"
+password="Avaras.duoc2024"
+nsg_name="nsg_grupo3"
+nic_name="nic_grupo3"
+subnet_name="grupo3"
+vnet_name="vnet_grupo3"
+db_name="keaguirre"
 
 # Función para manejar errores
 handle_error() {
@@ -36,7 +34,7 @@ handle_error() {
 # Función para crear el grupo de recursos
 create_resource_group() {
     echo "Creando grupo de recursos..."
-    if az group create --name evaluacion-1 --location "$location" --tags aay5121=grupo3; then
+    if az group create --name "$resource_group" --location "$location" --tags aay5121=grupo3; then
         resource_group_status=true
     else
         handle_error "No se pudo crear el grupo de recursos."
@@ -267,10 +265,6 @@ if $firewall_conf; then
     create_db
 fi
 if $sql_status; then
-    assign_role_to_user
-fi
-if $role_assigned; then
-    # cleanup_resources
     echo "Script terminado"
 fi
 # if $cleanup_done; then
