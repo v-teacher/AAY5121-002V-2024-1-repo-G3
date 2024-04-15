@@ -97,7 +97,7 @@ jobs:
             
       - name: Execute SQL query
         run: |
-          sqlcmd -S "$vm_name.database.windows.net" -d ${{ vars.INPUT_DB_NAME }} -U ${{ vars.INPUT_USERNAME }} -P ${{ secrets.INPUT_PASSWORD }} -Q "SELECT TOP 20 pc.Name as CategoryName, p.name as ProductName FROM SalesLT.ProductCategory pc JOIN SalesLT.Product p ON pc.productcategoryid = p.productcategoryid;"
+          sqlcmd -S ${{ vars.INPUT_SERVER_SQL_NAME }}.database.windows.net -d ${{ vars.INPUT_DB_NAME }} -U ${{ vars.INPUT_USERNAME }} -P ${{ secrets.INPUT_PASSWORD }} -I -Q "SELECT TOP 20 pc.Name as CategoryName, p.name as ProductName FROM SalesLT.ProductCategory pc JOIN SalesLT.Product p ON pc.productcategoryid = p.productcategoryid;"
       - name: Comprobar base de datos SQL  
         run: |
           az sql db show \
