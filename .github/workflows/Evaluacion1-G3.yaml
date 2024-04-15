@@ -11,15 +11,30 @@ jobs:
         uses: azure/login@v2
         with:
           creds: "${{ secrets.AZURE_CREDENTIALS }}"
+      
+      - name: Variables
+        env: 
+          INPUT_DB_NAME: ${{ vars.INPUT_DB_NAME }}
+          INPUT_IP_NAME: ${{ vars.INPUT_IP_NAME }}
+          INPUT_LOCATION: ${{ vars.INPUT_LOCATION }}
+          INPUT_NIC_NAME: ${{ vars.INPUT_NIC_NAME }}
+          INPUT_NSG_NAME: ${{ vars.INPUT_NSG_NAME }}
+          INPUT_RESOURCE_GROUP: ${{ vars.INPUT_RESOURCE_GROUP }}
+          INPUT_ROLE: ${{ vars. INPUT_ROLE }}
+          INPUT_SERVER_SQL_NAME: ${{ vars.INPUT_SERVER_SQL_NAME }}
+          INPUT_SUBNET_NAME: ${{ vars. INPUT_SUBNET_NAME }}
+          INPUT_USERNAME: ${{ vars.INPUT_USERNAME }}
+          INPUT_VM_NAME: ${{ vars. INPUT_VM_NAME }}
+          INPUT_VNET_NAME: ${{ vars.INPUT_VNET_NAME }}
         
       - name: Crear grupo de recursos
-        run: az group create --name ${{ vars.INPUT_RESOURCE_GROUP }} --location EastUS
+        run: az group create --name ${{ vars.INPUT_RESOURCE_GROUP }} --location ${{ vars.INPUT_LOCATION }}
           
       - name: Crear dirección IP pública para la máquina con Windows
-        run: az network public-ip create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --name "$INPUT_RESOURCE_GROUP" --allocation-method Static
+        run: az network public-ip create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --name ${{ vars.INPUT_IP_NAME }} --allocation-method Static
           
       - name: Crear el NSG
-        run: az network nsg create --resource-group "$INPUT_RESOURCE_GROUP" --name "$INPUT_NSG_NAME"
+        run: az network nsg create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --name "$INPUT_NSG_NAME"
           
       - name: Crear red virtual
         run: az network vnet create --resource-group "$INPUT_RESOURCE_GROUP" --name "$INPUT_VNET_NAME" --address-prefix 192.168.0.0/16 --subnet-name Subnet01 --subnet-prefix 192.168.10.0/24
