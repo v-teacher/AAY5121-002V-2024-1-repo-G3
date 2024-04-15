@@ -1,8 +1,7 @@
+on: [push]
+
 name: AzureLoginSample
 
-on:
-  workflow_dispatch:
-  
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -10,7 +9,7 @@ jobs:
       - name: Log in with Azure
         uses: azure/login@v2
         with:
-          creds: "${{ secrets.AZURE_CREDENTIALS }}"
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
       
       - name: Variables
         env: 
