@@ -31,57 +31,55 @@ jobs:
         run: az network public-ip create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --name ${{ vars.INPUT_IP_NAME }} --allocation-method Static
           
       - name: Crear el NSG
-        run: az network nsg create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --name "$INPUT_NSG_NAME"
+        run: az network nsg create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --name ${{ vars.INPUT_NSG_NAME }}
           
       - name: Crear red virtual
-        run: az network vnet create --resource-group "$INPUT_RESOURCE_GROUP" --name "$INPUT_VNET_NAME" --address-prefix 192.168.0.0/16 --subnet-name Subnet01 --subnet-prefix 192.168.10.0/24
+        run: az network vnet create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --name ${{ vars.INPUT_VNET_NAME }} --address-prefix 192.168.0.0/16 --subnet-name Subnet01 --subnet-prefix 192.168.10.0/24
           
       - name: Crear NIC para la máquina con Windows
-        run: az network nic create --resource-group "$INPUT_RESOURCE_GROUP" --name "$INPUT_NIC_NAME" --vnet-name Vnet01 --subnet Subnet01 --public-ip-address Publicwindows01 --network-security-group NSG01
+        run: az network nic create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --name ${{ vars.INPUT_NIC_NAME }} --vnet-name Vnet01 --subnet Subnet01 --public-ip-address Publicwindows01 --network-security-group NSG01
           
       - name: Creando Reglas Inbound 1
-        run: az network nsg rule create --resource-group "$INPUT_RESOURCE_GROUP" --nsg-name "$INPUT_NSG_NAME" --name AllowRDP --protocol Tcp --direction Inbound --priority 1000 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389 --access Allow
+        run: az network nsg rule create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --nsg-name ${{ vars.INPUT_NSG_NAME }} --name AllowRDP --protocol Tcp --direction Inbound --priority 1000 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389 --access Allow
           
       - name: Creando Reglas Inbound 2
-        run: az network nsg rule create --resource-group "$INPUT_RESOURCE_GROUP" --nsg-name "$INPUT_NSG_NAME" --name AllowHTTP --protocol Tcp --direction Inbound --priority 1001 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 80 --access Allow
+        run: az network nsg rule create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --nsg-name ${{ vars.INPUT_NSG_NAME }} --name AllowHTTP --protocol Tcp --direction Inbound --priority 1001 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 80 --access Allow
           
       - name: Creando Reglas Inbound 3
-        run: az network nsg rule create --resource-group "$INPUT_RESOURCE_GROUP" --nsg-name "$INPUT_NSG_NAME" --name AllowHTTPS --protocol Tcp --direction Inbound --priority 1002 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow 
+        run: az network nsg rule create --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --nsg-name ${{ vars.INPUT_NSG_NAME }} --name AllowHTTPS --protocol Tcp --direction Inbound --priority 1002 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow 
           
       - name: Crear VM con Windows
-        env: 
-          INPUT_PASSWORD: ${{ secrets.INPUT_PASSWORD }}
         run: |
           az vm create \
-            --resource-group "$INPUT_RESOURCE_GROUP" \
-            --name "$INPUT_VM_NAME" \
+            --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} \
+            --name ${{ vars. INPUT_VM_NAME }} \
             --image MicrosoftWindowsServer:WindowsServer:2019-datacenter:latest \
-            --admin-username "$INPUT_USERNAME" \
-            --admin-password "$INPUT_PASSWORD" \
+            --admin-username ${{ vars.INPUT_USERNAME }} \
+            --admin-password ${{ secrets.INPUT_PASSWORD }} \
             --size Standard_B2s \
-            --nics Nicwindows01 \
+            --nics ${{ vars.INPUT_NIC_NAME }} \
             --tags evaluacion1=grupo3
             
       - name: Comprobar VM Windows Server  
-        run: az vm show --name Mywindows01 --resource-group "$INPUT_RESOURCE_GROUP" --show-details --query provisioningState --output table
+        run: az vm show --name ${{ vars. INPUT_VM_NAME }} --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --show-details --query provisioningState --output table
         
       - name: Instalar IIS en la máquina virtual Windows Server
-        run: az vm run-command invoke --resource-group "$INPUT_RESOURCE_GROUP" --name Mywindows01 --command-id RunPowerShellScript --scripts 'Install-WindowsFeature -Name Web-Server -IncludeManagementTools'
+        run: az vm run-command invoke --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --name ${{ vars. INPUT_VM_NAME }} --command-id RunPowerShellScript --scripts 'Install-WindowsFeature -Name Web-Server -IncludeManagementTools'
         
       - name: Crear el servidor SQL   
         run: |
           az sql server create \
-            --resource-group "$INPUT_RESOURCE_GROUP" \
-            --name "$INPUT_SERVER_SQL_NAME" \
-            --location "$INPUT_LOCATION" \
-            --admin-user darkzeth \
-            --admin-password Dz753210.Dz753210.
+            --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} \
+            --name ${{ vars.INPUT_SERVER_SQL_NAME }} \
+            --location ${{ vars.INPUT_LOCATION }} \
+            --admin-user ${{ vars.INPUT_USERNAME }} \
+            --admin-password ${{ secrets.INPUT_PASSWORD }}
             
       - name: Configurar regla de firewall para permitir acceso 
         run: |
           az sql server firewall-rule create \
-            --resource-group "$INPUT_RESOURCE_GROUP" \
-            --server "$INPUT_SERVER_SQL_NAME" \
+            --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} \
+            --server ${{ vars.INPUT_SERVER_SQL_NAME }} \
             --name AllowAllAzureServices \
             --start-ip-address 0.0.0.0 \
             --end-ip-address 255.255.255.255 
@@ -89,25 +87,23 @@ jobs:
       - name: Crear la base de datos en Azure SQL Database 
         run: |
           az sql db create \
-            --resource-group "$INPUT_RESOURCE_GROUP" \
-            --server "$INPUT_SERVER_SQL_NAME" \
-            --name "$INPUT_DB_NAME" \
+            --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} \
+            --server ${{ vars.INPUT_SERVER_SQL_NAME }} \
+            --name ${{ vars.INPUT_DB_NAME }} \
             --edition GeneralPurpose \
             --family Gen5 \
             --sample-name AdventureWorksLT \
             --capacity 2
             
       - name: Execute SQL query
-        env: 
-          INPUT_PASSWORD: ${{ secrets.INPUT_PASSWORD }}
         run: |
-          sqlcmd -S "$vm_name.database.windows.net" -d "$INPUT_DB_NAME" -U "$INPUT_USERNAME" -P "$INPUT_PASSWORD" -Q "SELECT TOP 20 pc.Name as CategoryName, p.name as ProductName FROM SalesLT.ProductCategory pc JOIN SalesLT.Product p ON pc.productcategoryid = p.productcategoryid;"
+          sqlcmd -S "$vm_name.database.windows.net" -d ${{ vars.INPUT_DB_NAME }} -U ${{ vars.INPUT_USERNAME }} -P ${{ secrets.INPUT_PASSWORD }} -Q "SELECT TOP 20 pc.Name as CategoryName, p.name as ProductName FROM SalesLT.ProductCategory pc JOIN SalesLT.Product p ON pc.productcategoryid = p.productcategoryid;"
       - name: Comprobar base de datos SQL  
         run: |
           az sql db show \
-            --resource-group "$INPUT_RESOURCE_GROUP" \
-            --server "$INPUT_SERVER_SQL_NAME" \
-            --name "$INPUT_DB_NAME"
+            --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} \
+            --server ${{ vars.INPUT_SERVER_SQL_NAME }} \
+            --name ${{ vars.INPUT_DB_NAME }}
         
       - name: Todos los recursos se crearon exitosamente   
         run: |
