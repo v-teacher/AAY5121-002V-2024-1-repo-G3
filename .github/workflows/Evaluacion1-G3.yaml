@@ -10,8 +10,6 @@ jobs:
         uses: azure/login@v1
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
-      
-      - name: Variables
         env: 
           INPUT_DB_NAME: ${{ vars.INPUT_DB_NAME }}
           INPUT_IP_NAME: ${{ vars.INPUT_IP_NAME }}
