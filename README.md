@@ -19,3 +19,7 @@
 [Cálculo Calculadora](https://azure.com/e/27f760269bc14325829968bc10858258)
 
 [Informe](https://docs.google.com/document/d/1WpwRQ1O5uwJFLZ6ILPEPDe3yON3-1esZ/edit?usp=sharing&ouid=107365392565102071783&rtpof=true&sd=true)
+
+# Examen
+## Github action workflow
+![Alt text](./Microsoft_action_workflow.png)
