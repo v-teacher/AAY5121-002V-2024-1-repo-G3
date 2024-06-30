@@ -61,7 +61,7 @@ jobs:
             --nics ${{ vars.INPUT_NIC_NAME }} \
             --tags evaluacion1=grupo3
             
-      - name: Comprobar VM Windows Server  
+      - name: Comprobar Virtual Machine Windows Server  
         run: az vm show --name ${{ vars. INPUT_VM_NAME }} --resource-group ${{ vars.INPUT_RESOURCE_GROUP }} --show-details --query provisioningState --output table
         
       - name: Instalar IIS en la máquina virtual Windows Server
