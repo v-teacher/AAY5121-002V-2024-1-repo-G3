@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# Variables
+GrupoRecurso="Myrg01"
+Ubicacion="EastUS"
+NombreVM="Mywindows01"
+AdminName="darkzeth"
+AdminPassword="Dz753210.Dz753210."
+TipoVM="Standard_B2s"
+NombreVnet="Vnet01"
+NombreSubnet="Subnet01"
+IpPublicaWindows="Publicwindows01"
+NombreNicWindows="Nicwindows01"
+NombreNSG="NSG01"
+
+# Variables para el servidor SQL
+NombreServidorSQL="MySQLserverPrueba01"
+NombreBD="MibasededatosPrueba01"
+UsuarioSQL="darkzeth"
+PasswordSQL="Dz753210.Dz753210."
+UbicacionSQL="EastUS"
+SKU="Basic"  # Define el SKU que deseas utilizar para la base de datos SQL
+
+# Crear grupo de recursos
+az group create --name $GrupoRecurso --location $Ubicacion
+
+# Crear dirección IP pública para la máquina con Windows
+az network public-ip create --resource-group $GrupoRecurso --name $IpPublicaWindows --allocation-method Static
+
+# Crear el NSG
+az network nsg create --resource-group $GrupoRecurso --name $NombreNSG
+
+# Crear red virtual
+az network vnet create --resource-group $GrupoRecurso --name $NombreVnet --address-prefix 192.168.0.0/16 --subnet-name $NombreSubnet --subnet-prefix 192.168.10.0/24
+
+# Crear NIC para la máquina con Windows
+az network nic create --resource-group $GrupoRecurso --name $NombreNicWindows --vnet-name $NombreVnet --subnet $NombreSubnet --public-ip-address $IpPublicaWindows --network-security-group $NombreNSG
+
+# Crear la regla de entrada para permitir el tráfico RDP
+az network nsg rule create --resource-group $GrupoRecurso --nsg-name $NombreNSG --name AllowRDP --protocol Tcp --direction Inbound --priority 1000 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389 --access Allow
+
+# Crear la regla de entrada para permitir el tráfico HTTP
+az network nsg rule create --resource-group $GrupoRecurso --nsg-name $NombreNSG --name AllowHTTP --protocol Tcp --direction Inbound --priority 1001 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 80 --access Allow
+
+# Crear la regla de entrada para permitir el tráfico HTTPS
+az network nsg rule create --resource-group $GrupoRecurso --nsg-name $NombreNSG --name AllowHTTPS --protocol Tcp --direction Inbound --priority 1002 --source-address-prefixes Internet --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow
+
+# Crear VM con Windows
+az vm create \
+  --resource-group $GrupoRecurso \
+  --name $NombreVM \
+  --image Win2022Datacenter \
+  --admin-username $AdminName \
+  --admin-password $AdminPassword \
+  --size $TipoVM \
+  --nics $NombreNicWindows \
+  --tags Prueba01
+
+# Mostrar información de la VM con Windows
+az vm show --name $NombreVM --resource-group $GrupoRecurso --show-details --query provisioningState --output tsv
+
+if [ $? -eq 0 ]; then
+  echo "La máquina virtual de Windows ha sido creada exitosamente!"
+else
+  echo "Error: Ha ocurrido un error al crear la máquina virtual de Windows."
+  exit 1
+fi
+
+# Instalar IIS en la máquina virtual
+az vm run-command invoke --resource-group $GrupoRecurso --name $NombreVM --command-id RunPowerShellScript --scripts 'Install-WindowsFeature -Name Web-Server -IncludeManagementTools'
+
+# Crear el servidor SQL
+az sql server create --resource-group $GrupoRecurso --name $NombreServidorSQL --location $UbicacionSQL --admin-user $UsuarioSQL --admin-password $PasswordSQL
+
+# Crear la base de datos en Azure SQL Database
+az sql db create --resource-group $GrupoRecurso --server $NombreServidorSQL --name $NombreBD --edition $SKU --service-objective Basic --collation SQL_Latin1_General_CP1_CI_AS
+
+if [ $? -eq 0 ]; then
+  echo "La base de datos '$NombreBD' ha sido creada exitosamente!"
+else
+  echo "Error: Ha ocurrido un error al crear la base de datos '$NombreBD'."
+  exit 1
+fi
+
+# Ejecutar una consulta en la base de datos SQL
+resultadoConsulta=$(az sql db show --resource-group $GrupoRecurso --server $NombreVM --name $NombreBD --query "name")
+if [ "$resultadoConsulta" == "$NombreBD" ]; then
+  echo "Consulta de prueba en la base de datos '$NombreBD' ha sido exitosa!"
+else
+  echo "Error: Ha ocurrido un error al ejecutar la consulta en la base de datos '$NombreBD'."
+  exit 1
+fi
+
+echo "Probar en su navegador la siguente url http://$IpPublicaWindows"
